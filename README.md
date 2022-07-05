@@ -1,105 +1,48 @@
+# Angular Google 3D Street View
+This is an example repository for the use of 3D Google Maps with dynamic markers. In this example there will be an initial zoom on Paris using [tween.js](https://github.com/tweenjs/tween.js/) after which the markers will display. They're all clickable and will zoom using the Google maps camera. A polygon of the building will then be display, and the not-selected markers will be disabled. Due to missing polygons there isn't always the correct polygon.
 
 
-# AngularGoogleMaps
+## Installation
+After cloning this repo you will need to update the environmental variables in `apps/front/src/environments`.
 
-This project was generated using [Nx](https://nx.dev).
+```ts
+export const environment = {
+  googleMapsApi: 'your-api-here'
+};
 
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
+```
 
-🔎 **Smart, Fast and Extensible Build System**
+Then run it with
+```
+nx run front:serve
+nx run api:serve
+```
 
-## Quick Start & Documentation
+## How to get coordinates
+The method I've detailed here is obviously not a scalable solution but for demo purposes it suffices.
 
-[Nx Documentation](https://nx.dev/angular)
+1. Go to https://osmbuildings.org/
+2. CLick the `DATA` link top right
+3. Click the `FREE DOWNLOAD` button. This will take you to https://overpass-turbo.eu/ with the correct query ready.
+4. Find the address you want to visit, then click the `Run` button top left.
+5. This will create a data grid on top of the map. Select the building the want and copy the relationId. Not every building seems to have this sadly.
 
-[10-minute video showing all Nx features](https://nx.dev/getting-started/intro)
+![filters](docs/screenshots/relation-id.png)
 
-[Interactive Tutorial](https://nx.dev/react-tutorial/01-create-application)
+6. Export the Data as GeoJSON
+7. Find the Coordinates in the GeoJSON data using the relationId
 
-## Adding capabilities to your workspace
+## Further information
+* [Google Maps API](https://developers.google.com/maps/documentation/javascript)
+* [API for three.js](https://threejs.org/)
+* [Tween.js animation library](https://github.com/tweenjs/tween.js/)
 
-Nx supports many plugins which add capabilities for developing different types of applications and different tools.
+## Next Steps
 
-These capabilities include generating applications, libraries, etc as well as the devtools to test, and build projects as well.
-
-Below are our core plugins:
-
-- [Angular](https://angular.io)
-  - `ng add @nrwl/angular`
-- [React](https://reactjs.org)
-  - `ng add @nrwl/react`
-- Web (no framework frontends)
-  - `ng add @nrwl/web`
-- [Nest](https://nestjs.com)
-  - `ng add @nrwl/nest`
-- [Express](https://expressjs.com)
-  - `ng add @nrwl/express`
-- [Node](https://nodejs.org)
-  - `ng add @nrwl/node`
-
-There are also many [community plugins](https://nx.dev/community) you could add.
-
-## Generate an application
-
-Run `ng g @nrwl/angular:app my-app` to generate an application.
-
-> You can use any of the plugins above to generate applications as well.
-
-When using Nx, you can create multiple applications and libraries in the same workspace.
-
-## Generate a library
-
-Run `ng g @nrwl/angular:lib my-lib` to generate a library.
-
-> You can also use any of the plugins above to generate libraries as well.
-
-Libraries are shareable across libraries and applications. They can be imported from `@angular-google-maps/mylib`.
-
-## Development server
-
-Run `ng serve my-app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng g component my-component --project=my-app` to generate a new component.
-
-## Build
-
-Run `ng build my-app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `ng test my-app` to execute the unit tests via [Jest](https://jestjs.io).
-
-Run `nx affected:test` to execute the unit tests affected by a change.
-
-## Running end-to-end tests
-
-Run `ng e2e my-app` to execute the end-to-end tests via [Cypress](https://www.cypress.io).
-
-Run `nx affected:e2e` to execute the end-to-end tests affected by a change.
-
-## Understand your workspace
-
-Run `nx graph` to see a diagram of the dependencies of your projects.
-
-## Further help
-
-Visit the [Nx Documentation](https://nx.dev/angular) to learn more.
-
-
-
-
-
-
-## ☁ Nx Cloud
-
-### Distributed Computation Caching & Distributed Task Execution
-
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-cloud-card.png"></p>
-
-Nx Cloud pairs with Nx in order to enable you to build and test code more rapidly, by up to 10 times. Even teams that are new to Nx can connect to Nx Cloud and start saving time instantly.
-
-Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+1. Find a dynamic API for building coordinates
+   - Try this: https://wiki.openstreetmap.org/wiki/Overpass_API
+2. Move mock data to API
+3. Move generation of markers to backend using [CSS painting API](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Painting_API)
+4. Zoomout/deselect button
+5. Rotate camera around selected building
+6. Improve camera handling on zoom in

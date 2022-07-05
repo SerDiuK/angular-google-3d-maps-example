@@ -2,9 +2,9 @@
   "$schema": "./node_modules/nx/schemas/workspace-schema.json",
   "version": 2,
   "projects": {
-    "angular-google-maps": "apps/angular-google-maps",
-    "angular-google-maps-e2e": "apps/angular-google-maps-e2e",
+    "front": "apps/front",
     "api": "apps/api",
-    "api-interfaces": "libs/api-interfaces"
+    "api-interfaces": "libs/api-interfaces",
+    "front-map": "libs/front/map"
   }
 }

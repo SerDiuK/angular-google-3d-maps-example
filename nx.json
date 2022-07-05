@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "angular-google-maps",
+  "npmScope": "ng-maps",
   "affected": {
     "defaultBase": "main"
   },
@@ -16,9 +16,10 @@
   },
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
+      "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e"]
+        "cacheableOperations": ["build", "lint", "test", "e2e"],
+        "accessToken": "ODFhZjU1ZTQtOGNhOS00Zjk1LTk1OTctODNhZDgxMGEwNDg3fHJlYWQtd3JpdGU="
       }
     }
   },
@@ -39,7 +40,8 @@
       "unitTestRunner": "jest"
     },
     "@nrwl/angular:component": {
-      "style": "scss"
+      "style": "scss",
+      "changeDetection": "OnPush"
     }
   },
   "defaultProject": "angular-google-maps"
