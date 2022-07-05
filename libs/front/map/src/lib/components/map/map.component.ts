@@ -47,10 +47,6 @@ export class MapComponent implements OnInit, OnChanges {
   private selectedMarkerId: number | null = null;
   private hoveredMarkerId: number | null = null;
 
-  private readonly apiOptions = {
-    apiKey: 'AIzaSyD287J77V-jDg007vG6oCuSouXvLBbosCw',
-  };
-
   private readonly initialCameraOptions: google.maps.CameraOptions = {
     tilt: 0,
     heading: -10,
@@ -64,7 +60,7 @@ export class MapComponent implements OnInit, OnChanges {
     zoom: 6,
     center: { lat: 48.87199020385742, lng: 2.3356521129608154 },
     disableDefaultUI: true,
-    mapId: this.appConfig.googleMapsApi,
+    mapId: this.appConfig.baseMapKey,
   };
 
   private readonly DEFAULT_COLOR = 0xffffff;
@@ -105,7 +101,7 @@ export class MapComponent implements OnInit, OnChanges {
   }
 
   private async initMap() {
-    await new Loader(this.apiOptions).load();
+    await new Loader({ apiKey: this.appConfig.googleMapsApi }).load();
     return new google.maps.Map(
       document.querySelector('#map') as HTMLElement,
       this.mapOptions

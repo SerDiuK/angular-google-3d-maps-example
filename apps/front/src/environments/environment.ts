@@ -3,6 +3,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
+  baseMapId: 'your-map-id-here',
   googleMapsApi: 'your-api-here',
   production: false,
 };
