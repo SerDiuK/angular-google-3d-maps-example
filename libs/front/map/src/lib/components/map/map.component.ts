@@ -10,25 +10,29 @@ import {
   Inject,
 } from '@angular/core';
 import { Loader } from '@googlemaps/js-api-loader';
-import { untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Easing, Tween, update } from '@tweenjs/tween.js';
 import ThreejsOverlayView from '@ubilabs/threejs-overlay-view';
 import { LatLngAltitudeLiteral } from '@ubilabs/threejs-overlay-view/dist/types';
-import { Subject } from 'rxjs';
+import { Subject, tap } from 'rxjs';
 import {
+  Event,
   ExtrudeGeometry,
   Mesh,
   MeshStandardMaterial,
+  Object3D,
   Scene,
   Shape,
+  Vector3,
 } from 'three';
 import { mockData } from '../../data/data';
 export type ActiveMapData = 'availability' | 'intervention' | 'device-state';
-import { APP_CONFIG } from '@angular-google-maps/front-app-config';
+import { AppConfig, APP_CONFIG } from '@angular-google-maps/front-app-config';
 
 const BUILDING_HEIGHT = 31;
 const BUILDING_FILL_COLOR = 0x272c6c;
 
+@UntilDestroy()
 @Component({
   selector: 'front-map',
   templateUrl: './map.component.html',
@@ -45,9 +49,9 @@ export class MapComponent implements OnInit, OnChanges {
   private scene: Scene;
   private markers: google.maps.Marker[] = [];
   private selectedMarkerId: number | null = null;
-  private hoveredMarkerId: number | null = null;
+  private selectedBuilding: Object3D<Event>;
 
-  private readonly initialCameraOptions: google.maps.CameraOptions = {
+  private cameraOptions: google.maps.CameraOptions = {
     tilt: 0,
     heading: -10,
     zoom: 3,
@@ -60,34 +64,24 @@ export class MapComponent implements OnInit, OnChanges {
     zoom: 6,
     center: { lat: 48.87199020385742, lng: 2.3356521129608154 },
     disableDefaultUI: true,
-    mapId: this.appConfig.baseMapKey,
+    mapId: this.appConfig.baseMapId,
   };
-
-  private readonly DEFAULT_COLOR = 0xffffff;
-  private readonly HIGHLIGHT_COLOR = 0xf0f0f0;
 
   @Output() public markerClicked: EventEmitter<number> = new EventEmitter();
 
-  constructor(@Inject(APP_CONFIG) private appConfig: any) {}
+  constructor(@Inject(APP_CONFIG) private appConfig: AppConfig) {}
 
   public async ngOnInit(): Promise<void> {
     this.map = await this.initMap();
 
     this.overlay = new ThreejsOverlayView({
-      ...(this.initialCameraOptions.center as LatLngAltitudeLiteral),
+      ...(this.cameraOptions.center as LatLngAltitudeLiteral),
     });
 
     this.scene = this.overlay.getScene();
     this.overlay.setMap(this.map);
 
-    this.zoomOut$?.pipe(untilDestroyed(this)).subscribe(() => {
-      this.selectedMarkerId = null;
-      this.map.setZoom(14);
-
-      this.removeMarkers();
-      this.addMarkers();
-    });
-
+    this.handleZoomOut();
     this.animateOnInit();
   }
 
@@ -113,7 +107,9 @@ export class MapComponent implements OnInit, OnChanges {
       this.overlay.latLngAltToVector3({ lat, lng })
     );
 
-    this.scene.add(this.getBuilding(points));
+    this.selectedBuilding = this.highlightBuilding(points);
+
+    this.scene.add(this.selectedBuilding);
   }
 
   private addMarkers() {
@@ -144,21 +140,16 @@ export class MapComponent implements OnInit, OnChanges {
           icon: {
             url,
           },
-          // zIndex: this.hoveredMarkerId === val.id ? 10000 : 1,
           title: val.addressline1,
         });
 
         marker.addListener('click', () => {
-          this.map.setZoom(18);
-          this.map.setTilt(67);
-          this.map.setCenter(marker.getPosition() as google.maps.LatLng);
+          this.zoomToBuilding(marker);
 
           this.markerClicked.emit(Number(val.id));
           this.selectedMarkerId = val.id;
           this.setupBuilding(val.coordinates);
-
           this.removeMarkers();
-          this.addMarkers();
         });
 
         this.markers.push(marker);
@@ -173,30 +164,7 @@ export class MapComponent implements OnInit, OnChanges {
     this.markers = [];
   }
 
-  private animateOnInit(): void {
-    new Tween(this.initialCameraOptions) // Create a new tween that modifies 'cameraOptions'.
-      .to({ tilt: 67, heading: 5, zoom: 14 }, 5000) // Move to destination in 15 second.
-      .easing(Easing.Quadratic.Out) // Use an easing function to make the animation smooth.
-      .onUpdate(() => {
-        this.map.moveCamera(this.initialCameraOptions);
-      })
-      .start()
-      .onComplete(() => {
-        this.addMarkers();
-
-        this.overlay.requestRedraw();
-      });
-
-    // Setup the animation loop.
-    function animate(time: number) {
-      requestAnimationFrame(animate);
-      update(time);
-    }
-
-    requestAnimationFrame(animate);
-  }
-
-  private getBuilding(points: any) {
+  private highlightBuilding(points: Vector3[]): Object3D<Event> {
     const buildingMaterial = new MeshStandardMaterial({
       transparent: true,
       opacity: 0.5,
@@ -204,7 +172,7 @@ export class MapComponent implements OnInit, OnChanges {
     });
 
     const buildingShape = new Shape();
-    points.forEach((p: any, i: any) => {
+    points.forEach((p, i) => {
       i === 0 ? buildingShape.moveTo(p.x, p.y) : buildingShape.lineTo(p.x, p.y);
     });
 
@@ -217,5 +185,87 @@ export class MapComponent implements OnInit, OnChanges {
       extrudeSettings
     );
     return new Mesh(buildingGeometry, buildingMaterial);
+  }
+
+  private clearHighlightedBuilding(): void {
+    this.scene.remove(this.selectedBuilding);
+  }
+
+  private animateOnInit(): void {
+    this.moveCamera({ tilt: 67, heading: 5, zoom: 14 }, 5000, () => {
+      this.addMarkers();
+    });
+  }
+
+  private zoomToBuilding(marker: google.maps.Marker): void {
+    const to = {
+      tilt: 67,
+      heading: 67,
+      zoom: 19,
+      lat: marker.getPosition()?.lat() as number,
+      lng: marker.getPosition()?.lng() as number,
+    };
+
+    this.moveCamera(to, 2000);
+  }
+
+  private handleZoomOut(): void {
+    this.zoomOut$
+      .pipe(
+        tap(() => {
+          this.selectedMarkerId = null;
+          this.moveCamera({ zoom: 14, heading: 10 }, 2000);
+
+          this.clearHighlightedBuilding();
+
+          this.removeMarkers();
+          this.addMarkers();
+        }),
+        untilDestroyed(this)
+      )
+      .subscribe();
+  }
+
+  private moveCamera(
+    to: google.maps.CameraOptions,
+    duration = 5000,
+    onComplete?: () => void
+  ): void {
+    const tweenVal = {
+      ...this.cameraOptions,
+      tilt: this.map.getTilt(),
+      heading: this.map.getHeading(),
+      zoom: this.map.getZoom(),
+      lat: this.map.getCenter()?.lat(),
+      lng: this.map.getCenter()?.lng(),
+    };
+
+    new Tween(tweenVal)
+      .to(to, duration)
+      .easing(Easing.Quadratic.Out)
+      .onUpdate(() => {
+        this.cameraOptions = {
+          tilt: tweenVal.tilt,
+          heading: tweenVal.heading,
+          zoom: tweenVal.zoom,
+          center: { lat: tweenVal.lat as number, lng: tweenVal.lng as number },
+        };
+        this.map.moveCamera(this.cameraOptions);
+      })
+      .start()
+      .onComplete(() => {
+        if (onComplete) {
+          onComplete();
+        }
+
+        this.overlay.requestRedraw();
+      });
+
+    const animate = (time: number) => {
+      requestAnimationFrame(animate);
+      update(time);
+    };
+
+    requestAnimationFrame(animate);
   }
 }

@@ -41,7 +41,7 @@
     },
     "@nrwl/angular:component": {
       "style": "scss",
-      "changeDetection": "OnPush"
+      "change-detection": "OnPush"
     }
   },
   "defaultProject": "angular-google-maps"

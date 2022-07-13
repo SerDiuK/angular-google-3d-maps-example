@@ -1,0 +1,13 @@
+<front-map
+  [zoomOut$]="zoomOut$"
+  (markerClicked)="onMarkerClicked($event)"
+></front-map>
+<button
+  mat-raised-button
+  (click)="zoomOut()"
+  class="button-zoomout"
+  *ngIf="showZoomOutButton"
+>
+  <mat-icon>chevron_left</mat-icon>
+  <span>Return</span>
+</button>

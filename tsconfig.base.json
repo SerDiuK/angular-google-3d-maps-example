@@ -18,10 +18,10 @@
       "@angular-google-maps/api-interfaces": [
         "libs/api-interfaces/src/index.ts"
       ],
-      "@angular-google-maps/front-map": ["libs/front/map/src/index.ts"],
       "@angular-google-maps/front-app-config": [
         "libs/front/app-config/index.ts"
-      ]
+      ],
+      "@angular-google-maps/front-map": ["libs/front/map/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
